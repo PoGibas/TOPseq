@@ -50,24 +50,23 @@ rmDuplicates <- function(sampleInfo, duplicatesBy = "Adapter3") {
 
     if (!file.exists(outDup)) {
         # Start positions
-        dStart <- fread(pathBED) %>%
+        dStart <- fread(pathBED, nThread = 40) %>%
             .[, st := as.numeric(V2)] %>%
             .[V6 == "-", st := as.numeric(V3) - 1] %>%
             .[, .(chr = V1, start = st, strand = V6, read = paste0("@", V4))] %>%
             setkey(read)
         # Select reads with only one mapped position 
         foo <- dStart[, .N, read][N == 1, read]
-        saveRDS(dStart[read %in% foo], outTMP, compress = FALSE)
-        rm(dStart)
+        dStart <- dStart[read %in% foo]
 
         # FASTQ length
         dMain <- paste("paste - - - - <", pathFQ, 
                        "| awk '{print ($1), length($2)}'") %>%
-            fread() %>%
+            fread(nThread = 40) %>%
             setkey(V1) %>%
             .[V1 %in% foo] %>%
             setnames(c("read", "length")) %>%
-            merge(readRDS(outTMP), "read") %>%
+            merge(dStart, "read") %>%
             setkey(chr, start, strand, length)
         saveRDS(dMain[, .(chr, start, end = start + 1, strand, read)], outDup, compress = FALSE)
         dMain[, .(read = head(read, 1)), 
@@ -75,7 +74,6 @@ rmDuplicates <- function(sampleInfo, duplicatesBy = "Adapter3") {
             .[, .(chr, start, end, strand, read)] %>%
             setkey(chr, start, end) %>%
             saveRDS(outNoDup, compress = FALSE)
-        unlink(outTMP)
     }
     sampleInfo$duplicatesRemovedBy <- pathFQ
     sampleInfo$pathNoDuplicates <- outNoDup
