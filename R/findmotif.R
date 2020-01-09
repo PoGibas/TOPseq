@@ -8,12 +8,13 @@ findMotif <- function(
   library(ShortRead)
   fasta <- readDNAStringSet(path_genome)
   for (MOTIF in motif) {
+    print(MOTIF)
     foreach(i = seq_along(fasta), .combine = rbind) %do% {
-      matchPattern("CG", mask(fasta[[i]], "N"), fixed = FALSE) %>%
+      matchPattern(MOTIF, mask(fasta[[i]], "N"), fixed = FALSE) %>%
         start(.) %>%
         data.table(start = .) %>%
         .[, .(chr = names(fasta)[i], start)]
     } %>%
-      saveRDS(paste0("motif_", i, ".RDS"), compress = FALSE)
+      saveRDS(paste0("motif_", MOTIF, ".RDS"), compress = FALSE)
   }
 }
