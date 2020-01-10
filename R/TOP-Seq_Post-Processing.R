@@ -50,7 +50,7 @@ rmDuplicates <- function(sampleInfo, duplicatesBy = "Adapter3") {
 
     if (!file.exists(outDup)) {
         # Start positions
-        dStart <- fread(pathBED, nThread = 40) %>%
+        dStart <- fread(pathBED, nThread = 45) %>%
             .[, st := as.numeric(V2)] %>%
             .[V6 == "-", st := as.numeric(V3) - 1] %>%
             .[, .(chr = V1, start = st, strand = V6, read = paste0("@", V4))] %>%
@@ -62,7 +62,7 @@ rmDuplicates <- function(sampleInfo, duplicatesBy = "Adapter3") {
         # FASTQ length
         dMain <- paste("paste - - - - <", pathFQ, 
                        "| awk '{print ($1), length($2)}'") %>%
-            fread(nThread = 40) %>%
+            fread(nThread = 45) %>%
             setkey(V1) %>%
             .[V1 %in% foo] %>%
             setnames(c("read", "length")) %>%
